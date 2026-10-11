@@ -586,7 +586,8 @@ function wireSaveButtons(container,inp){
 function screenGate(text){
   var t=' '+String(text||'').toLowerCase()+' ';
   var bad=[/tiktok/,/instagram/,/facebook/,/youtube/,/reels/,/\bshorts\b/,/doordash/,/dasher/,
-    /\buber\b/,/grubhub/,/postmates/,/candy crush/,/level \d+/,/earnings/,/delivered/,
+    /\buber\b/,/grubhub/,/postmates/,/candy crush/,/level \d+/,
+    /\b(total|weekly|your)\s+earnings\b/,/delivered/,
     /order completed/,/batch completed/,/how was your/,/rate your/];
   for(var i=0;i<bad.length;i++) if(bad[i].test(t)) return {ok:false,reason:'Looks like social, game, or another app — not an Instacart offer.'};
   var amounts=(t.match(/\$\s?\d[\d,]*(?:\.\d{2})?/g)||[]).length;

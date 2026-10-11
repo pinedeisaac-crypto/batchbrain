@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e141b">
+<title>BatchBrain v1.3.0</title>
+<style>
+:root{
+  --bg:#0e141b; --card:#18222d; --card2:#1f2b39; --line:#2a3a4d;
+  --txt:#eef4f9; --mut:#93a5b8; --acc:#3fb97f; --warn:#e8b23e; --bad:#e0605e;
+  --blue:#4aa3e8; --radius:14px; --tabbar-h:64px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  font-size:16px; line-height:1.45;}
+body{padding-bottom:calc(var(--tabbar-h) + 76px + env(safe-area-inset-bottom));}
+.wrap{max-width:520px;margin:0 auto;padding:12px 14px 24px;}
+h1{font-size:22px;margin:6px 0 2px;}
+h2{font-size:18px;margin:18px 0 8px;}
+h3{font-size:15px;margin:14px 0 6px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;}
+.sub{color:var(--mut);font-size:13px;margin:0 0 10px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px;margin:10px 0;}
+.row{display:flex;gap:10px;align-items:center;}
+.row>*{flex:1;}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px;}
+input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);
+  color:var(--txt);border-radius:10px;padding:13px 12px;font-size:16px;min-height:48px;}
+input:focus,select:focus{outline:2px solid var(--blue);border-color:var(--blue);}
+input[type=number]{-moz-appearance:textfield;}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:12px;
+  padding:14px 16px;font-size:16px;font-weight:700;min-height:52px;color:#06130d;
+  background:var(--acc);width:100%;}
+button.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line);}
+button.warn{background:var(--warn);color:#231a04;}
+button.bad{background:var(--bad);color:#fff;}
+button.sm{min-height:44px;padding:10px 12px;font-size:14px;}
+.btnrow{display:flex;gap:8px;margin-top:10px;}
+.btnrow>*{flex:1;}
+.verdict{font-size:34px;font-weight:800;letter-spacing:1px;text-align:center;
+  padding:14px;border-radius:var(--radius);margin:10px 0;}
+.v-take{background:#123f2b;color:#5fe3a1;border:2px solid #2c7a52;}
+.v-border{background:#4a3a12;color:#f5c95c;border:2px solid #8a6d1f;}
+.v-pass{background:#4a1d1c;color:#f08a87;border:2px solid #8a3432;}
+.v-none{background:var(--card2);color:var(--mut);border:2px dashed var(--line);font-size:18px;}
+.why{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:12px 14px;margin:10px 0;font-size:15px;}
+.why li{margin:6px 0;}
+.why ul{margin:6px 0;padding-left:20px;}
+.kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px;}
+.kv:last-child{border-bottom:none;}
+.kv b{font-variant-numeric:tabular-nums;}
+.mut{color:var(--mut);} .small{font-size:13px;} .mono{font-variant-numeric:tabular-nums;}
+.tag{display:inline-block;background:var(--card2);border:1px solid var(--line);
+  border-radius:20px;padding:4px 10px;font-size:12px;margin:2px 4px 2px 0;color:var(--mut);}
+.tabs{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  background:#0a0f15;border-top:1px solid var(--line);display:flex;z-index:40;
+  padding-bottom:env(safe-area-inset-bottom);}
+.tabs button{background:none;color:var(--mut);border-radius:0;font-size:11px;font-weight:600;
+  min-height:0;padding:8px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.tabs button.on{color:var(--acc);}
+.tabs button .ic{font-size:20px;}
+.tabpage{display:none;} .tabpage.on{display:block;}
+#vbar{position:fixed;left:0;right:0;bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  z-index:39;display:none;}
+#vbar .inner{max-width:520px;margin:0 auto;padding:0 14px 8px;}
+#vbar .pill{background:var(--card2);border:1px solid var(--line);border-radius:14px;
+  padding:10px 14px;display:flex;align-items:center;justify-content:space-between;}
+#vbar .pill b{font-size:18px;letter-spacing:1px;}
+details{margin:8px 0;} summary{cursor:pointer;color:var(--blue);font-weight:600;padding:8px 0;}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;}
+th{color:var(--mut);font-size:12px;text-transform:uppercase;}
+.hist{border-left:4px solid var(--line);padding:8px 10px;margin:8px 0;background:var(--card);border-radius:0 10px 10px 0;}
+.hist.take{border-color:var(--acc);} .hist.pass{border-color:var(--bad);} .hist.border{border-color:var(--warn);}
+.pill-take{color:#5fe3a1;font-weight:800;} .pill-pass{color:#f08a87;font-weight:800;} .pill-border{color:#f5c95c;font-weight:800;}
+.warnbox{background:#3a2c10;border:1px solid #8a6d1f;color:#f5d789;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px;}
+.errbox{background:#3d1a19;border:1px solid #8a3432;color:#f5a3a1;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px;}
+.okbox{background:#123f2b;border:1px solid #2c7a52;color:#8fe6b4;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:14px;}
+.progress{height:10px;background:var(--card2);border-radius:6px;overflow:hidden;margin:8px 0;}
+.progress>i{display:block;height:100%;background:var(--acc);border-radius:6px;}
+.seg{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap;}
+.seg button{flex:1;background:var(--card2);color:var(--mut);border:1px solid var(--line);min-height:46px;font-size:13px;font-weight:600;}
+.seg button.on{background:#123f2b;color:#5fe3a1;border-color:#2c7a52;}
+.hidden{display:none!important;}
+footer{color:var(--mut);font-size:12px;text-align:center;margin:26px 0 8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>BatchBrain <span class="small mut">v1.3.0</span></h1>
+  <p class="sub">Should you take this batch? Fast verdict, plain-English why.</p>
+
+  <!-- ============ EVALUATE ============ -->
+  <div class="tabpage on" id="tab-evaluate">
+    <div class="card">
+      <h2 style="margin-top:0">Quick check</h2>
+      <p class="sub">Payout + miles from the offer screen. Add store &amp; items for a full verdict.</p>
+      <div class="row">
+        <div><label for="q-payout">Payout $ (incl. tip)</label><input id="q-payout" type="number" inputmode="decimal" step="0.01" placeholder="27.14"></div>
+        <div><label for="q-miles">Miles (displayed)</label><input id="q-miles" type="number" inputmode="decimal" step="0.1" placeholder="7.9"></div>
+      </div>
+      <div class="row">
+        <div><label for="q-store">Store type</label>
+          <select id="q-store">
+            <option value="">Unknown</option>
+            <option value="costco">Costco / warehouse</option>
+            <option value="grocery">Grocery</option>
+            <option value="other">Other retail</option>
+            <option value="delivery">Delivery only (no shopping)</option>
+          </select></div>
+        <div><label for="q-items">Items</label><input id="q-items" type="number" inputmode="numeric" placeholder="—"></div>
+        <div><label for="q-cust">Customers</label><input id="q-cust" type="number" inputmode="numeric" placeholder="—"></div>
+      </div>
+      <label>Return plan <span class="mut">(what happens after the last drop)</span></label>
+      <div class="seg" id="q-return">
+        <button data-r="unknown" class="on">Unknown</button>
+        <button data-r="nearby">Work nearby</button>
+        <button data-r="back">Drive back</button>
+        <button data-r="there">Finish there</button>
+      </div>
+      <div class="btnrow"><button id="q-go">Check it</button></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Read a screenshot</h2>
+      <p class="sub">On-device reading. The image never leaves your phone. One expanded Instacart offer only.</p>
+      <input type="file" id="shot" accept="image/*" class="hidden">
+      <div class="btnrow">
+        <button id="shot-btn" class="ghost">📷 Choose screenshot</button>
+        <button id="paste-btn" class="ghost">📋 Paste text</button>
+      </div>
+      <div id="ocr-status" class="small mut" style="margin-top:8px"></div>
+      <div id="capture-review" class="hidden">
+        <h3>Check the numbers</h3>
+        <div id="cap-warn"></div>
+        <div class="row">
+          <div><label>Payout $</label><input id="c-payout" type="number" inputmode="decimal" step="0.01"></div>
+          <div><label>Tip $ (if shown)</label><input id="c-tip" type="number" inputmode="decimal" step="0.01"></div>
+        </div>
+        <div class="row">
+          <div><label>Miles</label><input id="c-miles" type="number" inputmode="decimal" step="0.1"></div>
+          <div><label>Items</label><input id="c-items" type="number" inputmode="numeric"></div>
+        </div>
+        <div class="row">
+          <div><label>Units</label><input id="c-units" type="number" inputmode="numeric"></div>
+          <div><label>Customers</label><input id="c-cust" type="number" inputmode="numeric"></div>
+        </div>
+        <label>Store type</label>
+        <select id="c-store">
+          <option value="costco">Costco / warehouse</option>
+          <option value="grocery">Grocery</option>
+          <option value="other">Other retail</option>
+          <option value="delivery">Delivery only</option>
+        </select>
+        <div class="btnrow">
+          <button id="c-ok">Numbers look right ✓</button>
+          <button id="c-cancel" class="ghost">Discard</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="q-result"></div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Full calculator</h2>
+      <p class="sub">Every field, for post-offer analysis or when you know the details.</p>
+      <div class="row">
+        <div><label for="f-payout">Payout $</label><input id="f-payout" type="number" inputmode="decimal" step="0.01"></div>
+        <div><label for="f-tip">Tip $ (if known)</label><input id="f-tip" type="number" inputmode="decimal" step="0.01"></div>
+      </div>
+      <div class="row">
+        <div><label for="f-miles">Displayed miles</label><input id="f-miles" type="number" inputmode="decimal" step="0.1"></div>
+        <div><label for="f-approach">Approach miles</label><input id="f-approach" type="number" inputmode="decimal" step="0.1" placeholder="0"></div>
+      </div>
+      <div class="row">
+        <div><label for="f-items">Items</label><input id="f-items" type="number" inputmode="numeric"></div>
+        <div><label for="f-units">Units</label><input id="f-units" type="number" inputmode="numeric"></div>
+        <div><label for="f-cust">Customers</label><input id="f-cust" type="number" inputmode="numeric" value="1"></div>
+      </div>
+      <div class="row">
+        <div><label for="f-store">Store type</label>
+          <select id="f-store"><option value="costco">Costco / warehouse</option><option value="grocery">Grocery</option><option value="other">Other retail</option><option value="delivery">Delivery only</option></select></div>
+        <div><label for="f-heavy">Heavy units</label><input id="f-heavy" type="number" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <div class="row">
+        <div><label for="f-access">Building access</label>
+          <select id="f-access"><option value="unknown">Unknown</option><option value="easy">Easy / house</option><option value="apartment">Apartment</option></select></div>
+        <div><label for="f-stairs">Stairs?</label>
+          <select id="f-stairs"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      </div>
+      <div class="row">
+        <div><label for="f-shopmin">Shopping min (override)</label><input id="f-shopmin" type="number" inputmode="decimal" step="1" placeholder="auto"></div>
+        <div><label for="f-retmi">Return miles (override)</label><input id="f-retmi" type="number" inputmode="decimal" step="0.1" placeholder="auto"></div>
+      </div>
+      <label>Return plan</label>
+      <div class="seg" id="f-return">
+        <button data-r="unknown" class="on">Unknown</button>
+        <button data-r="nearby">Work nearby</button>
+        <button data-r="back">Drive back</button>
+        <button data-r="there">Finish there</button>
+      </div>
+      <div class="btnrow"><button id="f-go">Calculate</button></div>
+    </div>
+    <div id="f-result"></div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Practice examples</h2>
+      <p class="sub">Real public cases. Tap one to load it into Quick check.</p>
+      <div id="examples"></div>
+    </div>
+  </div>
+
+  <!-- ============ MY DAY ============ -->
+  <div class="tabpage" id="tab-day">
+    <div class="card">
+      <h2 style="margin-top:0">My day <span class="small mut" id="day-date"></span></h2>
+      <div class="row">
+        <div><label>Gross goal $</label><input id="d-goal" type="number" inputmode="decimal" value="200"></div>
+        <div><label>Planned hours</label><input id="d-hours" type="number" inputmode="decimal" value="8"></div>
+      </div>
+      <label>Shift timer <span class="mut">(waiting between offers counts)</span></label>
+      <div class="btnrow">
+        <button id="d-start" class="sm">▶ Start</button>
+        <button id="d-pause" class="sm ghost">⏸ Pause</button>
+      </div>
+      <div class="kv"><span>Working time</span><b id="d-time" class="mono">0:00</b></div>
+      <h3>Running totals (cumulative — saving replaces)</h3>
+      <div class="row">
+        <div><label>Earnings so far $</label><input id="d-earn" type="number" inputmode="decimal" step="0.01"></div>
+        <div><label>All work miles</label><input id="d-miles" type="number" inputmode="decimal" step="0.1"></div>
+      </div>
+      <div class="btnrow"><button id="d-save" class="sm">Save day totals</button></div>
+    </div>
+    <div class="card" id="d-pace"></div>
+    <div class="card">
+      <h2 style="margin-top:0">Offer vs. today</h2>
+      <p class="sub">How much of your remaining goal would this offer cover?</p>
+      <div class="row">
+        <div><label>Offer payout $</label><input id="d-opay" type="number" inputmode="decimal" step="0.01"></div>
+        <div><label>Est. minutes</label><input id="d-omin" type="number" inputmode="decimal" step="1"></div>
+      </div>
+      <div class="btnrow"><button id="d-obtn" class="sm ghost">Compare</button></div>
+      <div id="d-oresult" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- ============ HISTORY ============ -->
+  <div class="tabpage" id="tab-history">
+    <div class="card">
+      <h2 style="margin-top:0">Log a batch</h2>
+      <div class="row">
+        <div><label>Payout $</label><input id="h-payout" type="number" inputmode="decimal" step="0.01"></div>
+        <div><label>Miles (displayed)</label><input id="h-miles" type="number" inputmode="decimal" step="0.1"></div>
+      </div>
+      <div class="row">
+        <div><label>Items</label><input id="h-items" type="number" inputmode="numeric"></div>
+        <div><label>Customers</label><input id="h-cust" type="number" inputmode="numeric" value="1"></div>
+        <div><label>Store</label><select id="h-store"><option value="costco">Costco</option><option value="grocery">Grocery</option><option value="other">Other</option><option value="delivery">Delivery</option></select></div>
+      </div>
+      <label>Decision</label>
+      <div class="seg" id="h-dec"><button data-d="took" class="on">I took it</button><button data-d="passed">Passed</button></div>
+      <div class="btnrow"><button id="h-add" class="sm">Save batch</button><button id="h-csv" class="sm ghost">⬇ CSV</button></div>
+    </div>
+    <div id="h-list"></div>
+  </div>
+
+  <!-- ============ INSIGHTS ============ -->
+  <div class="tabpage" id="tab-insights">
+    <div class="card"><h2 style="margin-top:0">Insights</h2>
+      <p class="sub">From your logged sample batches. Practice examples are excluded.</p>
+      <div id="ins-body"><p class="mut">Log batches with actual results to see patterns.</p></div>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS ============ -->
+  <div class="tabpage" id="tab-settings">
+    <div class="card">
+      <h2 style="margin-top:0">Market preset</h2>
+      <div class="seg" id="s-preset">
+        <button data-p="seattle" class="on">Seattle / Puget Sound</button>
+        <button data-p="kc">Kansas City</button>
+        <button data-p="custom">Custom</button>
+      </div>
+      <p class="sub">Each market remembers its own settings below.</p>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">Targets</h2>
+      <p class="sub">v1.3.0 calibration: $28/hr sample target pace; drop penalties tuned to warehouse drop-offs (~2 min/customer).</p>
+      <div class="row">
+        <div><label>Min gross $/hr</label><input id="s-hr" type="number" inputmode="decimal" step="1"></div>
+        <div><label>Min $/mile</label><input id="s-mi" type="number" inputmode="decimal" step="0.1"></div>
+      </div>
+      <div class="row">
+        <div><label>Vehicle cost $/mi</label><input id="s-vc" type="number" inputmode="decimal" step="0.01"></div>
+        <div><label>Min after-vehicle $/hr (0=off)</label><input id="s-av" type="number" inputmode="decimal" step="1"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">Time model</h2>
+      <div class="row">
+        <div><label>Avg driving speed mph</label><input id="s-speed" type="number" inputmode="decimal" step="1"></div>
+        <div><label>Costco min/item</label><input id="s-cpace" type="number" inputmode="decimal" step="0.1"></div>
+      </div>
+      <div class="row">
+        <div><label>Grocery min/item</label><input id="s-gpace" type="number" inputmode="decimal" step="0.1"></div>
+        <div><label>Other retail min/item</label><input id="s-opace" type="number" inputmode="decimal" step="0.1"></div>
+      </div>
+      <div class="row">
+        <div><label>Min per drop-off</label><input id="s-drop" type="number" inputmode="decimal" step="0.5"></div>
+        <div><label>Min per extra customer</label><input id="s-xcust" type="number" inputmode="decimal" step="0.5"></div>
+      </div>
+      <div class="row">
+        <div><label>Heavy handling min/unit</label><input id="s-heavy" type="number" inputmode="decimal" step="0.1"></div>
+        <div><label>Dead-area wait min</label><input id="s-wait" type="number" inputmode="decimal" step="1"></div>
+      </div>
+      <h3>Return miles (% of displayed)</h3>
+      <div class="row">
+        <div><label>Good area %</label><input id="s-rg" type="number" inputmode="decimal" step="5"></div>
+        <div><label>Neutral %</label><input id="s-rn" type="number" inputmode="decimal" step="5"></div>
+        <div><label>Dead area %</label><input id="s-rd" type="number" inputmode="decimal" step="5"></div>
+      </div>
+      <div class="btnrow"><button id="s-save" class="sm">Save settings</button></div>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">Data</h2>
+      <div class="btnrow">
+        <button id="s-export" class="sm ghost">⬇ Export JSON</button>
+        <button id="s-reset" class="sm bad">Reset all data</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>BatchBrain v1.3.0 · everything stays on this device · <span id="ft-count"></span></footer>
+</div>
+
+<div id="vbar"><div class="inner"><div class="pill"><b id="vbar-v">—</b><span class="small mut" id="vbar-s"></span></div></div></div>
+
+<div class="tabs">
+  <button data-t="tab-evaluate" class="on"><span class="ic">⚖️</span>Evaluate</button>
+  <button data-t="tab-day"><span class="ic">📅</span>My day</button>
+  <button data-t="tab-history"><span class="ic">🧾</span>History</button>
+  <button data-t="tab-insights"><span class="ic">💡</span>Insights</button>
+  <button data-t="tab-settings"><span class="ic">⚙️</span>Settings</button>
+</div>
+
+<div id="paste-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div class="card" style="width:100%;max-width:480px;">
+    <h2 style="margin-top:0">Paste offer text</h2>
+    <textarea id="paste-text" rows="6" placeholder="Paste text copied from the offer screenshot…"></textarea>
+    <div class="btnrow"><button id="paste-go" class="sm">Read it</button><button id="paste-x" class="sm ghost">Cancel</button></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+// ===BB-MODEL-START===  (pure scoring model — no DOM; the node test evals this block)
+'use strict';
+function bbDefaults(){return {
+  targetHr:28, targetMi:2.0, vehCostMi:0.35, afterVehHr:20,
+  speedMph:22, costcoPerItem:4.5, groceryPerItem:3.0, otherPerItem:2.5,
+  costcoSetup:0, grocerySetup:5, otherSetup:4, checkoutMin:5,
+  dropMin:2, extraCustMin:2, heavyMinPerUnit:1.2, deadWaitMin:6,
+  retGood:10, retNeutral:40, retDead:100, stairsMult:1.8, aptMinPerStop:4,
+  borderline:0.80
+};}
+// v1.3.0 calibration notes: targetHr 28 = sample goal pace
+// ($28.13/hr); the README's $30 default PASSed the best sample batch.
+// dropMin/extraCustMin 2 = sample warehouse drop-offs (~2 min/customer).
+// borderline 0.80 (was 0.85): sample time-prediction noise is ~19% mean error,
+// so a payout within 20% of the bar is genuinely too close to call.
+// Costco checkout defaults to 0: the 4.5 min/item sample pace is all-in (incl. checkout).
+function bbPresets(){return {
+  seattle:{label:'Seattle / Puget Sound', s:bbDefaults()},
+  kc:{label:'Kansas City', s:Object.assign(bbDefaults(),{targetHr:25,targetMi:1.75,afterVehHr:17})},
+  custom:{label:'Custom', s:bbDefaults()}
+};}
+// input: {payout, miles, items, units, customers, store:'costco'|'grocery'|'other'|'delivery',
+//   heavyUnits, access:'unknown'|'easy'|'apartment', stairs:bool, approachMi,
+//   returnPlan:'unknown'|'nearby'|'back'|'there', returnMiOverride, shopMinOverride,
+//   checkoutMin (opt), scenario:'base'|'easier'|'slower'}
+function bbEffectiveMiles(inp,s){
+  var disp=Math.max(0,Number(inp.miles)||0), ap=Math.max(0,Number(inp.approachMi)||0), ret=0;
+  if(inp.returnMiOverride!=null&&inp.returnMiOverride!=='') ret=Math.max(0,Number(inp.returnMiOverride));
+  else if(inp.noReturn){ret=0;}
+  else{
+    var plan=inp.returnPlan||'unknown', share;
+    if(plan==='nearby') share=s.retGood; else if(plan==='back') share=100;
+    else if(plan==='there') share=0;
+    else share=(inp.scenario==='slower')?s.retDead:s.retNeutral;
+    ret=disp*share/100;
+  }
+  return disp+ap+ret;
+}
+function bbShopMinutes(inp,s){
+  if(inp.shopMinOverride!=null&&inp.shopMinOverride!=='') return Math.max(0,Number(inp.shopMinOverride));
+  var store=inp.store||'costco';
+  if(store==='delivery') return 0;
+  var per=store==='costco'?s.costcoPerItem:(store==='grocery'?s.groceryPerItem:s.otherPerItem);
+  var setup=store==='costco'?s.costcoSetup:(store==='grocery'?s.grocerySetup:s.otherSetup);
+  var items=Math.max(0,Number(inp.items)||0);
+  var mins=setup+items*per;
+  if(inp.scenario==='slower') mins*=1.25;
+  return mins;
+}
+function bbTimeMinutes(inp,s){
+  var eff=bbEffectiveMiles(inp,s);
+  var speed=s.speedMph*(inp.scenario==='slower'?0.8:1);
+  var drive=eff/Math.max(1,speed)*60;
+  var shop=bbShopMinutes(inp,s);
+  // Costco's 4.5 min/item sample pace is all-in (incl. checkout),
+  // so no separate checkout is added for Costco unless overridden explicitly.
+  var coDefault=(inp.store||'costco')==='costco'?0:s.checkoutMin;
+  var checkout=(inp.checkoutMin!=null?Number(inp.checkoutMin):coDefault)+(inp.scenario==='slower'?5:0);
+  var cust=Math.max(1,Math.round(Number(inp.customers)||1));
+  var drops=cust*s.dropMin+(cust-1)*s.extraCustMin;
+  var units=Math.max(0,Number(inp.units)||0);
+  var heavy=Math.max(0,Number(inp.heavyUnits)||0);
+  if(inp.scenario==='slower'&&!inp.heavyUnits){
+    var cap=inp.store==='costco'?6:3;
+    heavy=Math.min(cap,units);
+  }
+  var heavyT=heavy*s.heavyMinPerUnit*(1+0.25*(cust-1));
+  var accessT=0, acc=inp.access||'unknown';
+  if(acc==='apartment') accessT=s.aptMinPerStop*(inp.stairs?s.stairsMult:1)*cust;
+  else if(acc==='unknown'&&inp.scenario==='slower') accessT=s.aptMinPerStop*s.stairsMult*cust;
+  var wait=(inp.scenario==='slower'&&(inp.returnPlan==='unknown'))?s.deadWaitMin:0;
+  var total=drive+shop+checkout+drops+heavyT+accessT+wait;
+  return {total:total,drive:drive,shop:shop,checkout:checkout,drops:drops,heavy:heavyT,access:accessT,wait:wait,effMiles:eff};
+}
+// Suggested minimum payout = largest of the three floors, rounded up to whole dollar.
+function bbMinPayout(inp,s){
+  var t=bbTimeMinutes(inp,s), hrs=t.total/60, eff=t.effMiles;
+  var veh=eff*s.vehCostMi, pay=Number(inp.payout)||0;
+  var f1=s.targetHr*hrs;
+  var f2=s.targetMi*eff;
+  var f3=veh+s.afterVehHr*hrs;
+  var min=Math.max(f1,f2,f3);
+  min=Math.ceil(min-1e-9);
+  var coversVeh=pay>veh;
+  return {min:min,f1:f1,f2:f2,f3:f3,veh:veh,hours:hrs,timeMin:t.total,effMiles:eff,coversVeh:coversVeh,t:t};
+}
+function bbVerdict(inp,s){
+  var m=bbMinPayout(inp,s), pay=Number(inp.payout)||0;
+  var ratio=m.min>0?pay/m.min:0;
+  var v;
+  if(!m.coversVeh||ratio<s.borderline) v='PASS';
+  else if(ratio>=1) v='TAKE';
+  else v='BORDERLINE';
+  var afterVeh=m.hours>0?(pay-m.veh)/m.hours:0;
+  return {verdict:v,ratio:ratio,minPayout:m.min,hours:m.hours,timeMin:m.timeMin,
+    effMiles:m.effMiles,perMile:m.effMiles>0?pay/m.effMiles:0,
+    hourly:m.hours>0?pay/m.hours:0,afterVeh:afterVeh,veh:m.veh,floors:{f1:m.f1,f2:m.f2,f3:m.f3},t:m.t};
+}
+// Quick check: run base engine under easier + slower scenarios.
+function bbQuick(payout,miles,opts,s){
+  opts=opts||{};
+  var hasWorkload=(opts.store&&opts.store!=='')||Number(opts.items)>0||Number(opts.customers)>1;
+  var returnPlan=opts.returnPlan||'unknown';
+  var base={payout:payout,miles:miles,items:opts.items||0,units:opts.units||0,
+    customers:opts.customers||1,store:opts.store||'costco',heavyUnits:opts.heavyUnits,
+    access:'unknown',stairs:false,approachMi:0,returnPlan:returnPlan};
+  var eIn=Object.assign({},base,{scenario:'easier'});
+  if(returnPlan==='unknown') eIn.noReturn=true;   // easier: no return assumed when unknown
+  var sIn=Object.assign({},base,{scenario:'slower'}); // slower: dead-share return when unknown
+  var eV=bbVerdict(eIn,s), sV=bbVerdict(sIn,s);
+  var verdict,note;
+  if(eV.verdict==='PASS'){verdict='PASS';note='Even the easier scenario falls short.';}
+  else if(sV.verdict==='TAKE'){verdict='TAKE';note='Holds up even in the slower scenario.';}
+  else{verdict='BORDERLINE';note='Depends on the hidden factors — check them.';}
+  if(!hasWorkload&&verdict==='TAKE'){verdict='BORDERLINE';note='Two numbers can only reject. Add store & items for a TAKE.';}
+  var rep=verdict==='TAKE'?sV:eV; // representative scenario: slower when TAKE holds, easier otherwise
+  return {verdict:verdict,note:note,easier:eV,slower:sV,
+    minEasy:eV.minPayout,minSlow:sV.minPayout,
+    perMile:miles>0?payout/miles:0,hasWorkload:!!hasWorkload,
+    ratio:rep.ratio,minPayout:rep.minPayout,hours:rep.hours,timeMin:rep.timeMin,
+    effMiles:rep.effMiles,hourly:rep.hourly,afterVeh:rep.afterVeh,veh:rep.veh,
+    floors:rep.floors,t:rep.t};
+}
+// ===BB-MODEL-END===
+
+</script>
+<script>
+/* ===== app state, storage, UI (DOM code; model block above is pure) ===== */
+(function(){
+'use strict';
+var LSKEY='bb13';
+var S=null; // {presets:{seattle:{...},kc:{...},custom:{...}}, activePreset, history:[], day:{}, rememberedStore}
+function blankDay(){var d=new Date();return {date:d.toISOString().slice(0,10),goal:200,plannedHours:8,
+  earnings:0,miles:0,timerAccum:0,timerRunning:null};}
+function load(){
+  try{S=JSON.parse(localStorage.getItem(LSKEY));}catch(e){S=null;}
+  if(!S||!S.presets){var P=bbPresets();S={presets:{seattle:P.seattle.s,kc:P.kc.s,custom:P.custom.s},
+    activePreset:'seattle',history:[],day:blankDay(),rememberedStore:'costco'};}
+  if(!S.day) S.day=blankDay();
+}
+function save(){try{localStorage.setItem(LSKEY,JSON.stringify(S));}catch(e){}}
+function cur(){return S.presets[S.activePreset];}
+function $(id){return document.getElementById(id);}
+function money(n){return '$'+Number(n).toFixed(2);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabs button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.tabs button').forEach(function(x){x.classList.remove('on');});
+    b.classList.add('on');
+    document.querySelectorAll('.tabpage').forEach(function(p){p.classList.remove('on');});
+    $(b.dataset.t).classList.add('on');
+    if(b.dataset.t==='tab-insights') renderInsights();
+    if(b.dataset.t==='tab-history') renderHistory();
+    window.scrollTo(0,0);
+  });
+});
+function segWire(id,cb){var el=$(id);el.querySelectorAll('button').forEach(function(b){
+  b.addEventListener('click',function(){el.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+    b.classList.add('on');cb(b);});});}
+function segVal(id,attr){var b=$(id).querySelector('button.on');return b?b.dataset[attr||'r']:null;}
+function segSet(id,val,attr){attr=attr||'r';$(id).querySelectorAll('button').forEach(function(b){
+  b.classList.toggle('on',b.dataset[attr]===val);});}
+
+/* ---------- verdict bar ---------- */
+function showVbar(v,sub){var bar=$('vbar');bar.style.display='block';
+  $('vbar-v').textContent=v;
+  $('vbar-v').style.color=v==='TAKE'?'#5fe3a1':(v==='PASS'?'#f08a87':'#f5c95c');
+  $('vbar-s').textContent=sub||'';}
+function hideVbar(){$('vbar').style.display='none';}
+
+/* ---------- plain-English Why ---------- */
+function storeName(st){return st==='costco'?'Costco / warehouse':st==='grocery'?'grocery store':st==='delivery'?'delivery-only':'store';}
+function whyLines(v,inp,s,q){
+  var L=[], r=q||v;
+  L.push('<b>'+r.verdict+'</b> — '+esc(r.note||('needs '+money(r.minPayout)+' to take at your targets.')));
+  var hrs=r.hours, perMile=r.perMile;
+  L.push('Estimated '+Math.round(r.timeMin)+' min ('+hrs.toFixed(2)+' h) for '+r.effMiles.toFixed(1)+' effective miles.');
+  L.push('That works out to <b>'+money(r.hourly)+'/hr</b> gross and <b>'+money(perMile)+'/mi</b>.');
+  if(s.afterVehHr>0) L.push('After vehicle costs ('+money(r.veh)+' at '+money(s.vehCostMi)+'/mi): <b>'+money(r.afterVeh)+'/hr</b> vs your '+money(s.afterVehHr)+'/hr floor.');
+  L.push('Suggested minimum payout: <b>'+money(r.minPayout)+'</b> — the highest of '+money(r.floors.f1)+' (hourly target), '+money(r.floors.f2)+' (per-mile target)'+(s.afterVehHr>0?', '+money(r.floors.f3)+' (after-vehicle floor)':'')+'.');
+  if(q){L.push('Easier scenario: '+money(q.easier.hourly)+'/hr · '+money(q.easier.minPayout)+' to take. Slower scenario: '+money(q.slower.hourly)+'/hr · '+money(q.slower.minPayout)+' to take.');}
+  // assumptions
+  var a=[];
+  if(inp.items) a.push(inp.items+' items'+(inp.units?' / '+inp.units+' units':''));
+  if(inp.customers>1) a.push(inp.customers+' customers');
+  if(inp.store&&inp.store!=='delivery') a.push(storeName(inp.store)+' shopping pace');
+  if(inp.returnPlan==='unknown') a.push('return miles unknown — '+(q?'easier assumes none, slower assumes dead-area return':'assumed neutral area'));
+  else if(inp.returnPlan) a.push('return plan: '+inp.returnPlan);
+  if(a.length) L.push('<span class="mut">Assumes: '+esc(a.join(' · '))+'.</span>');
+  // difficulty tags
+  var tags=[];
+  if(inp.units>=15) tags.push('big unit count');
+  if(inp.customers>=3) tags.push('3+ customers');
+  if(inp.store==='costco') tags.push('warehouse workload');
+  if(Number(inp.miles)>=8) tags.push('long drive');
+  if(tags.length) L.push('Workload tags: '+tags.map(function(t){return '<span class="tag">'+esc(t)+'</span>';}).join(''));
+  return L;
+}
+function tipWarningHtml(inp){
+  var pay=Number(inp.payout)||0, tip=Number(inp.tip)||0;
+  if(pay>0&&tip>0&&tip/pay>=0.4)
+    return '<div class="warnbox">⚠️ Heads up: <b>'+money(tip)+'</b> of this payout ('+Math.round(tip/pay*100)+'%) is tip. A <b>$0.00 tip</b> on an order is possible — tips can change or vanish. The verdict above counts the full payout; if the tip shrank, it would be worse.</div>';
+  return '';
+}
+function verdictCard(title,v,inp,s,q){
+  var cls=v.verdict==='TAKE'?'v-take':v.verdict==='PASS'?'v-pass':'v-border';
+  var h='<div class="card"><div class="verdict '+cls+'">'+v.verdict+'</div>';
+  h+='<div class="why"><ul>'+whyLines(v,inp,s,q).map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div>';
+  h+=tipWarningHtml(inp);
+  if(q&&q.minEasy!==q.minSlow) h+='<p class="small mut">Payout to meet targets: '+money(q.minEasy)+' (easier) – '+money(q.minSlow)+' (slower). Ranges are sensitivity checks, not guarantees.</p>';
+  h+='<div class="btnrow"><button class="sm" data-saveq="1">I took it · save</button><button class="sm ghost" data-saveq="0">Save only</button></div>';
+  h+='<p class="small mut">These buttons log history in BatchBrain only — they don\'t accept anything in Instacart.</p></div>';
+  return h;
+}
+function wireSaveButtons(container,inp){
+  container.querySelectorAll('[data-saveq]').forEach(function(b){
+    b.addEventListener('click',function(){
+      addHistory({payout:inp.payout,miles:inp.miles,items:inp.items,customers:inp.customers,
+        store:inp.store,decision:b.dataset.saveq==='1'?'took':'saved',note:'from evaluate'});
+      alert('Saved to History.');
+    });
+  });
+}
+
+/* ---------- screen guard (deterministic text-template gate) ---------- */
+function screenGate(text){
+  var t=' '+String(text||'').toLowerCase()+' ';
+  var bad=[/tiktok/,/instagram/,/facebook/,/youtube/,/reels/,/\bshorts\b/,/doordash/,/dasher/,
+    /\buber\b/,/grubhub/,/postmates/,/candy crush/,/level \d+/,/earnings/,/delivered/,
+    /order completed/,/batch completed/,/how was your/,/rate your/];
+  for(var i=0;i<bad.length;i++) if(bad[i].test(t)) return {ok:false,reason:'Looks like social, game, or another app — not an Instacart offer.'};
+  var amounts=(t.match(/\$\s?\d[\d,]*(?:\.\d{2})?/g)||[]).length;
+  var miles=(t.match(/\d+(?:\.\d+)?\s*mi\b/g)||[]).length;
+  if(amounts>=3&&miles>=3) return {ok:false,reason:'Multiple offers in one image — not a single expanded offer.'};
+  var hasAmt=/\$\s?\d[\d,]*(?:\.\d{2})?/.test(t);
+  var hasMi=/\d+(?:\.\d+)?\s*mi\b/.test(t);
+  var hasWork=/item|order|deliver|shop|customer|batch/.test(t);
+  if(hasAmt&&hasMi&&hasWork) return {ok:true};
+  return {ok:false,reason:'Could not find an Instacart offer pattern (payout + miles + items/orders).'};
+}
+/* ---------- OCR parse ---------- */
+function parseMoney(s){var m=String(s).replace(/,/g,'').match(/(\d+(?:\.\d{1,2})?)/);return m?Number(m[1]):null;}
+function parseOfferText(text){
+  var warns=[];
+  var t=String(text||'');
+  // payout: largest $ amount on the offer (total), with dropped-decimal recovery
+  var amts=[],re=/\$\s?([\d,]+(?:\.\d{1,2})?)/g,m;
+  while((m=re.exec(t))){amts.push({raw:m[1],val:Number(m[1].replace(/,/g,''))});}
+  var payout=null,tip=null;
+  if(amts.length){
+    amts.sort(function(a,b){return b.val-a.val;});
+    payout=amts[0].val;
+    if(payout>500){ // absurd for one batch — possible dropped decimal
+      var fixed=payout/100, ok=false;
+      for(var i=0;i<amts.length&&!ok;i++)for(var j=i+1;j<amts.length&&!ok;j++){
+        if(Math.abs(amts[i].val+amts[j].val-fixed)<0.06) ok=true;
+      }
+      if(ok){warns.push('Recovered a dropped decimal ($'+payout.toFixed(0)+' → $'+fixed.toFixed(2)+') — base + tip agree. Double-check.');payout=fixed;}
+      else{payout=null;warns.push('Payout looks wrong ($'+amts[0].val.toFixed(0)+') and base + tip don\'t agree — left blank.');}
+    }
+    // tip: look for explicit tip line
+    var tm=t.match(/tip[^\d$]{0,10}\$\s?([\d,]+(?:\.\d{2})?)/i);
+    if(tm) tip=Number(tm[1].replace(/,/g,''));
+  }
+  // miles: two independent readings; disagreement -> blank
+  function milesA(){var mm=t.match(/(\d+(?:\.\d+)?)\s*mi\b/i);return mm?Number(mm[1]):null;}
+  function milesB(){var mm=t.match(/(\d+(?:\.\d+)?)\s*miles?\b/i);return mm?Number(mm[1]):null;}
+  var ma=milesA(),mb=milesB(),miles=null;
+  if(ma!=null&&mb!=null){miles=(Math.abs(ma-mb)<0.05)?ma:null;
+    if(miles==null) warns.push('Two mileage readings disagree ('+ma+' vs '+mb+') — left blank.');}
+  else miles=(ma!=null?ma:mb);
+  function numAfter(pat){var mm=t.match(pat);return mm?Number(mm[1]):null;}
+  var items=numAfter(/(\d+)\s*items?/i), units=numAfter(/(\d+)\s*units?/i);
+  var cust=numAfter(/(\d+)\s*(?:customers?|orders?)/i);
+  if(items!=null&&units!=null&&units<items){warns.push('Units ('+units+') below items ('+items+') — check.');}
+  var store=/costco/i.test(t)?'costco':/whole foods|trader joe|aldi|safeway|kroger|99 ranch|uwajimaya/i.test(t)?'grocery':'';
+  return {payout:payout,tip:tip,miles:miles,items:items,units:units,customers:cust||1,store:store,warns:warns};
+}
+var ocrWorker=null, ocrBusy=false;
+function setOcrStatus(s){$('ocr-status').textContent=s;}
+function runOCR(file){
+  if(ocrBusy){setOcrStatus('Already reading — one at a time.');return;}
+  if(typeof Tesseract==='undefined'){setOcrStatus('Reader failed to load (needs connection once). Try paste-text instead.');return;}
+  ocrBusy=true;setOcrStatus('Reading screenshot on this device…');
+  var img=new Image();
+  img.onload=function(){
+    Tesseract.recognize(img,'eng',{logger:function(p){if(p.status==='recognizing text')setOcrStatus('Reading… '+Math.round((p.progress||0)*100)+'%');}})
+    .then(function(res){ocrBusy=false;handleCaptureText(res.data.text||'');})
+    .catch(function(e){ocrBusy=false;setOcrStatus('Read failed. Try paste-text.');clearCapture();});
+  };
+  img.onerror=function(){ocrBusy=false;setOcrStatus('Could not open that image.');};
+  img.src=URL.createObjectURL(file);
+}
+function handleCaptureText(text){
+  var g=screenGate(text);
+  if(!g.ok){clearCapture();setOcrStatus('');$('q-result').innerHTML='<div class="errbox">🚫 No verdict — '+esc(g.reason)+'</div>';hideVbar();return;}
+  var p=parseOfferText(text);
+  $('c-payout').value=p.payout!=null?p.payout.toFixed(2):'';
+  $('c-tip').value=p.tip!=null?p.tip.toFixed(2):'';
+  $('c-miles').value=p.miles!=null?p.miles:'';
+  $('c-items').value=p.items!=null?p.items:'';
+  $('c-units').value=p.units!=null?p.units:'';
+  $('c-cust').value=p.customers||1;
+  $('c-store').value=p.store||S.rememberedStore||'costco';
+  $('cap-warn').innerHTML=(p.warns.length?'<div class="warnbox">'+p.warns.map(esc).join('<br>')+'</div>':'')+
+    '<p class="small mut">Remembered store: '+esc(S.rememberedStore||'costco')+' — change it if this shot is different.</p>';
+  $('capture-review').classList.remove('hidden');
+  setOcrStatus('Review the numbers, then confirm. No verdict until you do.');
+  hideVbar();
+}
+function clearCapture(){$('capture-review').classList.add('hidden');$('cap-warn').innerHTML='';}
+$('shot-btn').addEventListener('click',function(){$('shot').click();});
+$('shot').addEventListener('change',function(e){if(e.target.files[0])runOCR(e.target.files[0]);e.target.value='';});
+$('paste-btn').addEventListener('click',function(){$('paste-modal').classList.remove('hidden');});
+$('paste-x').addEventListener('click',function(){$('paste-modal').classList.add('hidden');});
+$('paste-go').addEventListener('click',function(){
+  var tx=$('paste-text').value;$('paste-modal').classList.add('hidden');$('paste-text').value='';
+  if(tx.trim()) handleCaptureText(tx);
+});
+$('c-cancel').addEventListener('click',function(){clearCapture();setOcrStatus('');});
+$('c-ok').addEventListener('click',function(){
+  var inp={payout:Number($('c-payout').value),tip:Number($('c-tip').value)||0,
+    miles:Number($('c-miles').value),items:Number($('c-items').value)||0,
+    units:Number($('c-units').value)||0,customers:Number($('c-cust').value)||1,
+    store:$('c-store').value,returnPlan:'unknown'};
+  S.rememberedStore=inp.store;save();
+  if(!(inp.payout>0)||!(inp.miles>0)){$('q-result').innerHTML='<div class="errbox">Payout and miles are required — fix the numbers.</div>';return;}
+  var s=cur(),q=bbQuick(inp.payout,inp.miles,inp,s);
+  $('q-result').innerHTML=verdictCard('Screenshot offer',q,inp,s,q);
+  wireSaveButtons($('q-result'),inp);clearCapture();setOcrStatus('');
+  showVbar(q.verdict,money(q.minEasy)+'–'+money(q.minSlow)+' to take');
+  $('q-result').scrollIntoView();
+});
+
+/* ---------- quick check ---------- */
+segWire('q-return',function(){});
+$('q-go').addEventListener('click',function(){
+  var payout=Number($('q-payout').value), miles=Number($('q-miles').value);
+  if(!(payout>0)||!(miles>0)){$('q-result').innerHTML='<div class="errbox">Enter payout and miles.</div>';hideVbar();return;}
+  var store=$('q-store').value, items=Number($('q-items').value)||0, cust=Number($('q-cust').value)||1;
+  var inp={payout:payout,miles:miles,items:items,customers:cust,store:store,returnPlan:segVal('q-return')};
+  var s=cur(),q=bbQuick(payout,miles,{store:store,items:items,customers:cust,returnPlan:segVal('q-return')},s);
+  $('q-result').innerHTML=verdictCard('Quick check',q,inp,s,q);
+  wireSaveButtons($('q-result'),inp);
+  showVbar(q.verdict,money(q.minEasy)+'–'+money(q.minSlow)+' to take');
+  $('q-result').scrollIntoView();
+});
+
+/* ---------- full calculator ---------- */
+segWire('f-return',function(){});
+$('f-go').addEventListener('click',function(){
+  var inp={payout:Number($('f-payout').value),tip:Number($('f-tip').value)||0,
+    miles:Number($('f-miles').value),approachMi:Number($('f-approach').value)||0,
+    items:Number($('f-items').value)||0,units:Number($('f-units').value)||0,
+    customers:Number($('f-cust').value)||1,store:$('f-store').value,
+    heavyUnits:$('f-heavy').value===''?null:Number($('f-heavy').value),
+    access:$('f-access').value,stairs:$('f-stairs').value==='yes',
+    shopMinOverride:$('f-shopmin').value===''?null:Number($('f-shopmin').value),
+    returnMiOverride:$('f-retmi').value===''?null:Number($('f-retmi').value),
+    returnPlan:segVal('f-return')};
+  if(!(inp.payout>0)){$('f-result').innerHTML='<div class="errbox">Enter a payout.</div>';return;}
+  if(!(inp.miles>=0)){$('f-result').innerHTML='<div class="errbox">Enter miles (0 allowed).</div>';return;}
+  if(inp.tip>inp.payout){$('f-result').innerHTML='<div class="errbox">Tip can\'t exceed payout — fix the numbers.</div>';return;}
+  var s=cur(),v=bbVerdict(inp,s);
+  v.note='Full calculation with your entered details.';
+  $('f-result').innerHTML=verdictCard('Full calculator',v,inp,s,null);
+  wireSaveButtons($('f-result'),inp);
+  showVbar(v.verdict,money(v.minPayout)+' to take');
+  $('f-result').scrollIntoView();
+});
+
+/* ---------- practice examples (13) ---------- */
+var EXAMPLES=[
+ {p:44.86,mi:53.9,items:6,units:10,cust:1,store:'other',label:'The 53.9-mile offer',src:'driver screenshot'},
+ {p:32.51,mi:16.4,items:12,units:13,cust:1,store:'grocery',label:'99 Ranch grocery single',src:'driver screenshot'},
+ {p:27.14,mi:7.9,items:29,units:29,cust:3,store:'costco',label:'Costco triple',src:'driver screenshot'},
+ {p:31.90,mi:5.8,items:18,units:20,cust:3,store:'costco',label:'Costco water triple (heavy)',src:'driver screenshot'},
+ {p:16.20,mi:11.7,items:2,units:3,cust:1,store:'other',label:"Lowe's two-item trip",src:'driver screenshot'},
+ {p:12.49,mi:9.9,items:2,units:2,cust:1,store:'other',label:'Michaels balloon trip',src:'driver screenshot'},
+ {p:10.21,mi:5.6,items:2,units:3,cust:1,store:'grocery',label:'Uwajimaya short shop',src:'driver screenshot'},
+ {p:17.18,mi:8.3,items:4,units:8,cust:1,store:'other',label:"Lowe's four items",src:'driver screenshot'},
+ {p:50.00,mi:0.9,items:12,units:12,cust:1,store:'grocery',label:'Short-trip unicorn',src:'Reddit report (unverified)'},
+ {p:54.10,mi:18.7,items:27,units:105,cust:2,store:'costco',label:'27 items, 105 units',src:'Reddit report (unverified)'},
+ {p:80.00,mi:40,items:34,units:34,cust:2,store:'costco',label:'$80 / 40 miles',src:'Reddit report (unverified)'},
+ {p:40.00,mi:3,items:6,units:6,cust:1,store:'other',label:'A comfortable TAKE',src:'synthetic'},
+ {p:27.00,mi:6.7,items:20,units:24,cust:3,store:'costco',label:'Heavy Costco triple',src:'synthetic'}
+];
+function renderExamples(){
+  $('examples').innerHTML=EXAMPLES.map(function(e,i){
+    return '<div class="kv"><span>'+esc(e.label)+' <span class="mut small">· '+esc(e.src)+'</span><br><span class="small mut">'+money(e.p)+' · '+e.mi+' mi · '+e.items+' items · '+e.cust+' cust</span></span><button class="sm ghost" style="max-width:90px" data-ex="'+i+'">Load</button></div>';
+  }).join('');
+  $('examples').querySelectorAll('[data-ex]').forEach(function(b){
+    b.addEventListener('click',function(){var e=EXAMPLES[Number(b.dataset.ex)];
+      $('q-payout').value=e.p;$('q-miles').value=e.mi;$('q-items').value=e.items;
+      $('q-cust').value=e.cust;$('q-store').value=e.store;
+      document.querySelector('[data-t="tab-evaluate"]').click();window.scrollTo(0,0);});
+  });
+}
+/* ---------- seed: 9 sample batches (synthetic demo data) ---------- */
+var SEED=[
+ {d:'2026-01-05',p:25.00,mi:6.0,items:10,units:12,cust:2,store:'costco',min:60.00,label:'Sample batch 1'},
+ {d:'2026-01-06',p:18.50,mi:4.5,items:6,units:8,cust:1,store:'grocery',min:45.00,label:'Sample batch 2'},
+ {d:'2026-01-07',p:42.00,mi:9.0,items:20,units:24,cust:3,store:'costco',min:95.00,label:'Sample batch 3'},
+ {d:'2026-01-08',p:15.00,mi:3.2,items:4,units:5,cust:1,store:'delivery',min:30.00,label:'Sample batch 4'},
+ {d:'2026-01-09',p:30.00,mi:7.5,items:14,units:16,cust:2,store:'costco',min:70.00,label:'Sample batch 5'},
+ {d:'2026-01-10',p:22.00,mi:5.0,items:8,units:10,cust:2,store:'grocery',min:50.00,label:'Sample batch 6'},
+ {d:'2026-01-11',p:12.00,mi:2.8,items:3,units:3,cust:1,store:'delivery',min:25.00,label:'Sample batch 7'},
+ {d:'2026-01-12',p:35.00,mi:8.0,items:16,units:20,cust:3,store:'costco',min:80.00,label:'Sample batch 8'},
+ {d:'2026-01-13',p:28.00,mi:6.5,items:12,units:14,cust:2,store:'grocery',min:65.00,label:'Sample batch 9'}
+];
+function seedIfEmpty(){
+  if(S.seeded)return;
+  S.history=SEED.map(function(b,i){return {id:'seed-'+i,date:b.d,payout:b.p,miles:b.mi,items:b.items,
+    units:b.units,customers:b.cust,store:b.store,decision:'took',label:b.label,
+    actualMin:b.min,actualPayout:b.p,imported:true,takeAgain:null,ts:Date.now()};});
+  S.seeded=true;save();
+}
+/* ---------- 126 weeks of SAMPLE earnings (synthetic demo data) ---------- */
+var WEEKLY=[200.00,249.47,238.74,287.63,275.94,263.51,310.16,295.75,340.15,323.23,304.90,345.09,323.75,300.85,336.40,310.41,342.93,314.03,283.81,312.37,279.85,306.39,272.17,237.34,262.11,226.66,191.18,215.87,180.92,206.52,172.84,140.06,168.32,137.76,168.50,140.64,114.25,149.38,126.07,104.32,144.11,125.39,168.11,152.16,137.45,183.83,171.17,219.31,208.06,197.25,246.68,236.17,225.51,274.52,263.00,310.79,297.70,283.59,328.31,311.75,293.80,334.39,313.46,350.98,326.94,301.35,334.26,305.73,335.85,304.72,272.47,299.25,265.21,230.53,255.39,219.98,244.48,209.11,174.05,199.48,165.60,192.56,160.53,129.65,160.03,131.79,105.00,139.73,116.00,153.84,133.22,114.11,156.45,140.16,185.13,171.24,158.34,206.28,194.89,183.98,233.37,222.86,272.26,261.38,250.02,298.00,285.16,331.33,316.38,300.17,342.60,323.58,303.06,340.99,317.36,352.19,325.49,297.34,327.80,296.99,265.03,292.05,258.21,283.68,248.65,213.29];
+var EARN_STATS={total:30474.33,weeks:126,avgWorking:241.86,best:352.19,bestLabel:'Sample peak week',
+  kcPeak:352.19,kcLabel:'Sample era A (3 wks)',sea:296.61,seaLabel:'Sample era B (2 wks)',
+  y2026:241.86,kcIdx:[118,119,120],seaIdx:[124,125]};
+
+/* ---------- history ---------- */
+function addHistory(h){h.id='h'+Date.now();h.date=new Date().toISOString().slice(0,10);h.ts=Date.now();
+  S.history.unshift(h);save();renderHistory();}
+function renderHistory(){
+  var el=$('h-list');
+  if(!S.history.length){el.innerHTML='<div class="card"><p class="mut">No batches logged yet.</p></div>';return;}
+  el.innerHTML=S.history.map(function(h){
+    var cls=h.decision==='took'?'take':(h.decision==='passed'?'pass':'border');
+    var perHr=h.actualMin?money(h.actualPayout/h.actualMin*60)+'/hr':'';
+    var line='<b>'+money(h.payout)+'</b> · '+h.miles+' mi · '+(h.items||'?')+' items · '+(h.customers||1)+' cust';
+    if(h.actualMin) line+='<br><span class="small">Actual: '+Math.round(h.actualMin)+' min · '+money(h.actualPayout)+' · <b>'+perHr+'</b></span>';
+    if(h.imported) line+=' <span class="tag">sample data</span>';
+    if(h.takeAgain) line+=' <span class="tag">'+esc(h.takeAgain==='yes'?'would take again':'would not take again')+'</span>';
+    var form=h.actualMin?'':'<div class="row"><div><label>Actual min</label><input type="number" inputmode="decimal" data-am="'+h.id+'" placeholder="74"></div>'+
+      '<div><label>Final payout $</label><input type="number" inputmode="decimal" step="0.01" data-ap="'+h.id+'" placeholder="'+h.payout+'"></div></div>'+
+      '<div class="seg" data-tg="'+h.id+'"><button data-v="yes">Would take again</button><button data-v="no">Would not</button></div>'+
+      '<div class="btnrow"><button class="sm ghost" data-logact="'+h.id+'">Log actuals</button></div>';
+    return '<div class="hist '+cls+'"><div class="row"><div>'+line+
+      (h.label?'<br><span class="small mut">'+esc(h.label)+'</span>':'')+'</div>'+
+      '<div style="max-width:110px"><span class="pill-'+(h.decision==='took'?'take':h.decision==='passed'?'pass':'border')+'">'+esc(h.decision.toUpperCase())+'</span><br>'+
+      '<button class="sm ghost" data-del="'+h.id+'" style="margin-top:6px">Delete</button></div></div>'+form+'</div>';
+  }).join('');
+  el.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){
+    S.history=S.history.filter(function(h){return h.id!==b.dataset.del;});save();renderHistory();});});
+  el.querySelectorAll('[data-logact]').forEach(function(b){b.addEventListener('click',function(){
+    var id=b.dataset.logact,h=S.history.filter(function(x){return x.id===id;})[0];if(!h)return;
+    var am=el.querySelector('[data-am="'+id+'"]'),ap=el.querySelector('[data-ap="'+id+'"]');
+    var tg=el.querySelector('[data-tg="'+id+'"] .on');
+    if(!(Number(am.value)>0)){alert('Actual minutes must be positive.');return;}
+    if(!tg){alert('Pick take-again feedback.');return;}
+    h.actualMin=Number(am.value);h.actualPayout=Number(ap.value)||h.payout;h.takeAgain=tg.dataset.v;
+    save();renderHistory();});});
+  el.querySelectorAll('.seg[data-tg]').forEach(function(seg){
+    seg.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){
+      seg.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');});});});
+  var done=S.history.filter(function(h){return h.actualMin>0;}).length;
+  $('ft-count').textContent=S.history.length+' batches · '+done+' with actuals';
+}
+$('h-add').addEventListener('click',function(){
+  var p=Number($('h-payout').value),mi=Number($('h-miles').value);
+  if(!(p>0)||!(mi>=0)){alert('Enter payout and miles.');return;}
+  addHistory({payout:p,miles:mi,items:Number($('h-items').value)||0,customers:Number($('h-cust').value)||1,
+    store:$('h-store').value,decision:segVal('h-dec','d'),actualMin:0});
+  $('h-payout').value='';$('h-miles').value='';$('h-items').value='';
+});
+segWire('h-dec',function(){});
+$('h-csv').addEventListener('click',function(){
+  var rows=[['id','date','payout','miles','items','customers','store','decision','actual_min','actual_payout','take_again','imported']];
+  S.history.forEach(function(h){rows.push([h.id,h.date,h.payout,h.miles,h.items||'',h.customers||'',h.store||'',
+    h.decision,h.actualMin||'',h.actualPayout||'',h.takeAgain||'',h.imported?'1':'']);});
+  var csv=rows.map(function(r){return r.join(',');}).join('\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='batchbrain-history.csv';a.click();
+});
+
+/* ---------- insights ---------- */
+function renderInsights(){
+  var done=S.history.filter(function(h){return h.actualMin>0&&h.actualPayout>0;});
+  var html='';
+  if(done.length){
+    var withHr=done.map(function(h){return {h:h,hr:h.actualPayout/h.actualMin*60};});
+    withHr.sort(function(a,b){return b.hr-a.hr;});
+    var best=withHr[0],worst=withHr[withHr.length-1];
+    html+='<h3>Best & worst (actual $/hr)</h3><div class="kv"><span>🏆 Best: '+esc(best.h.label||best.h.date)+'</span><b class="pill-take">'+money(best.hr)+'/hr</b></div>';
+    html+='<div class="kv"><span>🪫 Worst: '+esc(worst.h.label||worst.h.date)+'</span><b class="pill-pass">'+money(worst.hr)+'/hr</b></div>';
+    var trips=withHr.filter(function(x){return x.h.customers>=3;}),sing=withHr.filter(function(x){return x.h.customers===1;});
+    function avg(a){return a.length?a.reduce(function(s,x){return s+x.hr;},0)/a.length:0;}
+    if(trips.length&&sing.length) html+='<div class="kv"><span>Avg triples ('+trips.length+')</span><b>'+money(avg(trips))+'/hr</b></div><div class="kv"><span>Avg singles ('+sing.length+')</span><b>'+money(avg(sing))+'/hr</b></div>';
+    var noAgain=done.filter(function(h){return h.takeAgain==='no';}).length;
+    if(noAgain) html+='<p class="small mut">'+noAgain+' batch(es) marked "would not take again".</p>';
+  } else html+='<p class="mut">Log batches with actual results to see patterns.</p>';
+  // earnings history
+  var max=Math.max.apply(null,WEEKLY),W=100/H;
+  var bars=WEEKLY.map(function(v,i){
+    var c='#2c7a52';
+    if(EARN_STATS.kcIdx.indexOf(i)>=0)c='#3fb97f';
+    if(EARN_STATS.seaIdx.indexOf(i)>=0)c='#4aa3e8';
+    return '<div title="'+money(v)+'" style="flex:1;background:'+c+';height:'+Math.max(2,Math.round(v/max*90))+'px;border-radius:2px;"></div>';
+  }).join('');
+  html+='<h3>Earnings history — 126 weeks</h3><p class="small mut">Sample data · 126 weeks. Green = era A peak weeks, blue = era B.</p>';
+  html+='<div style="display:flex;align-items:flex-end;gap:1px;height:100px;margin:8px 0;">'+bars+'</div>';
+  html+='<div class="kv"><span>Total gross</span><b>'+money(EARN_STATS.total)+'</b></div>';
+  html+='<div class="kv"><span>Avg working week</span><b>'+money(EARN_STATS.avgWorking)+'/wk</b></div>';
+  html+='<div class="kv"><span>Best week ('+EARN_STATS.bestLabel+')</span><b class="pill-take">'+money(EARN_STATS.best)+'</b></div>';
+  html+='<div class="kv"><span>'+EARN_STATS.kcLabel+'</span><b>'+money(EARN_STATS.kcPeak)+'/wk</b></div>';
+  html+='<div class="kv"><span>'+EARN_STATS.seaLabel+'</span><b>'+money(EARN_STATS.sea)+'/wk</b></div>';
+  html+='<div class="kv"><span>2026 average (best year)</span><b>'+money(EARN_STATS.y2026)+'/wk</b></div>';
+  html+='<p class="small mut">Sample commentary: era B is trending toward era A form. A $200/day goal ≈ '+money(EARN_STATS.avgWorking/7*5)+'/wk at 5 days — right around the all-time working average.</p>';
+  $('ins-body').innerHTML=html;
+}
+
+/* ---------- settings ---------- */
+function fillSettings(){var s=cur();
+  $('s-hr').value=s.targetHr;$('s-mi').value=s.targetMi;$('s-vc').value=s.vehCostMi;$('s-av').value=s.afterVehHr;
+  $('s-speed').value=s.speedMph;$('s-cpace').value=s.costcoPerItem;$('s-gpace').value=s.groceryPerItem;
+  $('s-opace').value=s.otherPerItem;$('s-drop').value=s.dropMin;$('s-xcust').value=s.extraCustMin;
+  $('s-heavy').value=s.heavyMinPerUnit;$('s-wait').value=s.deadWaitMin;
+  $('s-rg').value=s.retGood;$('s-rn').value=s.retNeutral;$('s-rd').value=s.retDead;
+  segSet('s-preset',S.activePreset,'p');
+}
+$('s-save').addEventListener('click',function(){var s=cur();
+  s.targetHr=Number($('s-hr').value)||30;s.targetMi=Number($('s-mi').value)||2;
+  s.vehCostMi=Number($('s-vc').value)||0.35;s.afterVehHr=Number($('s-av').value)||0;
+  s.speedMph=Number($('s-speed').value)||22;s.costcoPerItem=Number($('s-cpace').value)||4.5;
+  s.groceryPerItem=Number($('s-gpace').value)||3;s.otherPerItem=Number($('s-opace').value)||2.5;
+  s.dropMin=Number($('s-drop').value)||3;s.extraCustMin=Number($('s-xcust').value)||4;
+  s.heavyMinPerUnit=Number($('s-heavy').value)||1.2;s.deadWaitMin=Number($('s-wait').value)||6;
+  s.retGood=Number($('s-rg').value)||10;s.retNeutral=Number($('s-rn').value)||40;s.retDead=Number($('s-rd').value)||100;
+  save();alert('Settings saved for this market.');});
+segWire('s-preset',function(b){S.activePreset=b.dataset.p;save();fillSettings();});
+$('s-export').addEventListener('click',function(){
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));
+  a.download='batchbrain-backup.json';a.click();});
+$('s-reset').addEventListener('click',function(){
+  if(confirm('Delete ALL BatchBrain data on this device?')){localStorage.removeItem(LSKEY);location.reload();}});
+
+/* ---------- my day ---------- */
+function fmtDur(ms){var s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60);
+  return h+':'+String(m).padStart(2,'0');}
+function dayWorkedMs(){var d=S.day;var ms=d.timerAccum;if(d.timerRunning)ms+=Date.now()-d.timerRunning;return ms;}
+setInterval(function(){if($('tab-day').classList.contains('on'))$('d-time').textContent=fmtDur(dayWorkedMs());},1000);
+$('d-start').addEventListener('click',function(){if(!S.day.timerRunning){S.day.timerRunning=Date.now();save();}});
+$('d-pause').addEventListener('click',function(){if(S.day.timerRunning){S.day.timerAccum+=Date.now()-S.day.timerRunning;S.day.timerRunning=null;save();}});
+$('d-save').addEventListener('click',function(){var d=S.day;
+  d.goal=Number($('d-goal').value)||200;d.plannedHours=Number($('d-hours').value)||8;
+  d.earnings=Number($('d-earn').value)||0;d.miles=Number($('d-miles').value)||0;save();renderDay();});
+function renderDay(){var d=S.day,s=cur();
+  $('day-date').textContent=d.date;$('d-goal').value=d.goal;$('d-hours').value=d.plannedHours;
+  $('d-earn').value=d.earnings||'';$('d-miles').value=d.miles||'';
+  $('d-time').textContent=fmtDur(dayWorkedMs());
+  var hrs=dayWorkedMs()/3600000, rem=Math.max(0,d.goal-d.earnings), remH=Math.max(0,d.plannedHours-hrs);
+  var pace=remH>0?rem/remH:0, grossHr=hrs>0?d.earnings/hrs:0;
+  var vehCost=d.miles*s.vehCostMi, avHr=hrs>0?(d.earnings-vehCost)/hrs:0;
+  var pct=Math.min(100,d.goal>0?d.earnings/d.goal*100:0);
+  var state=d.earnings>=d.goal?'<div class="okbox">🎯 Goal reached — nice work.</div>':(remH<=0&&rem>0?'<div class="warnbox">Planned hours used with '+money(rem)+' to go.</div>':'');
+  $('d-pace').innerHTML='<h2 style="margin-top:0">Pace</h2>'+state+
+    '<div class="progress"><i style="width:'+pct+'%"></i></div>'+
+    '<div class="kv"><span>Earned / goal</span><b>'+money(d.earnings)+' / '+money(d.goal)+'</b></div>'+
+    '<div class="kv"><span>Required pace</span><b>'+money(pace)+'/hr</b></div>'+
+    '<div class="kv"><span>Gross /hr (incl. waiting)</span><b>'+money(grossHr)+'/hr</b></div>'+
+    (d.miles?'<div class="kv"><span>After vehicle /hr</span><b>'+money(avHr)+'/hr</b></div>':'<p class="small mut">Enter miles to see after-vehicle rate. Blank miles = unknown, not zero.</p>');
+}
+$('d-obtn').addEventListener('click',function(){
+  var pay=Number($('d-opay').value),min=Number($('d-omin').value),d=S.day;
+  if(!(pay>0)||!(min>0)){$('d-oresult').innerHTML='<div class="errbox">Enter payout and minutes.</div>';return;}
+  var hrs=dayWorkedMs()/3600000, rem=Math.max(0,d.goal-d.earnings), remH=Math.max(0,d.plannedHours-hrs);
+  var remMin=remH*60, budget=rem>0?(remMin*pay/rem)-10:0;
+  var msg=min<=budget?'<div class="okbox">Fits the remaining plan: needs ≤ '+Math.round(budget)+' min of your remaining '+Math.round(remMin)+'.</div>'
+    :'<div class="warnbox">Tight: needs ≤ '+Math.round(budget)+' min but estimate is '+Math.round(min)+' min.</div>';
+  $('d-oresult').innerHTML=msg+'<p class="small mut">Separate from TAKE/BORDERLINE/PASS — falling behind doesn\'t change your batch targets.</p>';
+});
+
+/* ---------- init (must run before the ?scan= block: handleCaptureText reads S) ---------- */
+load();seedIfEmpty();renderExamples();renderHistory();fillSettings();renderDay();
+
+/* ---------- back-tap scan (?scan=) ---------- */
+(function(){
+  var m=location.search.match(/[?&]scan=([^&]*)/);
+  if(!m) return;
+  function clearScan(){
+    try{
+      var sp=new URLSearchParams(location.search);
+      sp.delete('scan');
+      var q=sp.toString();
+      history.replaceState(null,'',location.pathname+(q?'?'+q:'')+location.hash);
+    }catch(e){}
+  }
+  try{
+    var tx=decodeURIComponent(m[1].replace(/\+/g,' '));
+    if(tx.length>0 && tx.length<4000 && /[$\d]/.test(tx)){
+      handleCaptureText(tx);
+    }
+  }catch(e){}
+  clearScan();
+})();
+
+})();
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e141b">
-<title>BatchBrain v1.3.0</title>
+<title>BatchBrain v1.4.0</title>
 <style>
 :root{
   --bg:#0e141b; --card:#18222d; --card2:#1f2b39; --line:#2a3a4d;
@@ -29,6 +29,7 @@ label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px;}
 input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);
   color:var(--txt);border-radius:10px;padding:13px 12px;font-size:16px;min-height:48px;}
 input:focus,select:focus{outline:2px solid var(--blue);border-color:var(--blue);}
+input::placeholder,textarea::placeholder{color:var(--mut);opacity:.45;}
 input[type=number]{-moz-appearance:textfield;}
 button{font-family:inherit;cursor:pointer;border:none;border-radius:12px;
   padding:14px 16px;font-size:16px;font-weight:700;min-height:52px;color:#06130d;
@@ -90,48 +91,33 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin:26px 0 8px;}
 </head>
 <body>
 <div class="wrap">
-  <h1>BatchBrain <span class="small mut">v1.3.0</span></h1>
+  <h1>BatchBrain <span class="small mut">v1.4.0</span></h1>
   <p class="sub">Should you take this batch? Fast verdict, plain-English why.</p>
 
   <!-- ============ EVALUATE ============ -->
   <div class="tabpage on" id="tab-evaluate">
-    <div class="card">
-      <h2 style="margin-top:0">Quick check</h2>
-      <p class="sub">Payout + miles from the offer screen. Add store &amp; items for a full verdict.</p>
-      <div class="row">
-        <div><label for="q-payout">Payout $ (incl. tip)</label><input id="q-payout" type="number" inputmode="decimal" step="0.01" placeholder="27.14"></div>
-        <div><label for="q-miles">Miles (displayed)</label><input id="q-miles" type="number" inputmode="decimal" step="0.1" placeholder="7.9"></div>
-      </div>
-      <div class="row">
-        <div><label for="q-store">Store type</label>
-          <select id="q-store">
-            <option value="">Unknown</option>
-            <option value="costco">Costco / warehouse</option>
-            <option value="grocery">Grocery</option>
-            <option value="other">Other retail</option>
-            <option value="delivery">Delivery only (no shopping)</option>
-          </select></div>
-        <div><label for="q-items">Items</label><input id="q-items" type="number" inputmode="numeric" placeholder="—"></div>
-        <div><label for="q-cust">Customers</label><input id="q-cust" type="number" inputmode="numeric" placeholder="—"></div>
-      </div>
-      <label>Return plan <span class="mut">(what happens after the last drop)</span></label>
-      <div class="seg" id="q-return">
-        <button data-r="unknown" class="on">Unknown</button>
-        <button data-r="nearby">Work nearby</button>
-        <button data-r="back">Drive back</button>
-        <button data-r="there">Finish there</button>
-      </div>
-      <div class="btnrow"><button id="q-go">Check it</button></div>
+    <div class="card" id="hero-card">
+      <div class="verdict v-none" id="hero-v">—</div>
+      <p id="hero-why" class="sub" style="text-align:center;margin:8px 0 0">Scan a batch or enter payout + miles to get your verdict.</p>
     </div>
+    <details class="card hidden" id="eval-breakdown">
+      <summary>Full breakdown</summary>
+      <div id="eval-breakdown-body"></div>
+    </details>
 
     <div class="card">
-      <h2 style="margin-top:0">Read a screenshot</h2>
-      <p class="sub">On-device reading. The image never leaves your phone. One expanded Instacart offer only.</p>
-      <input type="file" id="shot" accept="image/*" class="hidden">
+      <h2 style="margin-top:0">Check a batch</h2>
+      <p class="sub">Payout + miles is enough for a verdict. A screenshot fills in the rest.</p>
+      <div class="row">
+        <div><label for="q-payout">Payout $ (incl. tip)</label><input id="q-payout" type="number" inputmode="decimal" step="0.01" placeholder="—"></div>
+        <div><label for="q-miles">Miles (displayed)</label><input id="q-miles" type="number" inputmode="decimal" step="0.1" placeholder="—"></div>
+      </div>
+      <div class="btnrow"><button id="q-go">Check it</button></div>
       <div class="btnrow">
-        <button id="shot-btn" class="ghost">📷 Choose screenshot</button>
+        <button id="shot-btn" class="ghost">📷 Scan screenshot</button>
         <button id="paste-btn" class="ghost">📋 Paste text</button>
       </div>
+      <input type="file" id="shot" accept="image/*" class="hidden">
       <div id="ocr-status" class="small mut" style="margin-top:8px"></div>
       <div id="capture-review" class="hidden">
         <h3>Check the numbers</h3>
@@ -162,10 +148,28 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin:26px 0 8px;}
       </div>
     </div>
 
-    <div id="q-result"></div>
-
-    <div class="card">
-      <h2 style="margin-top:0">Full calculator</h2>
+    <details class="card">
+      <summary>Details — store, items, workload, return plan</summary>
+      <div class="row">
+        <div><label for="q-store">Store type</label>
+          <select id="q-store">
+            <option value="">Unknown</option>
+            <option value="costco">Costco / warehouse</option>
+            <option value="grocery">Grocery</option>
+            <option value="other">Other retail</option>
+            <option value="delivery">Delivery only (no shopping)</option>
+          </select></div>
+        <div><label for="q-items">Items</label><input id="q-items" type="number" inputmode="numeric" placeholder="—"></div>
+        <div><label for="q-cust">Customers</label><input id="q-cust" type="number" inputmode="numeric" placeholder="—"></div>
+      </div>
+      <label>Return plan <span class="mut">(what happens after the last drop)</span></label>
+      <div class="seg" id="q-return">
+        <button data-r="unknown" class="on">Unknown</button>
+        <button data-r="nearby">Work nearby</button>
+        <button data-r="back">Drive back</button>
+        <button data-r="there">Finish there</button>
+      </div>
+      <h3>Full calculator</h3>
       <p class="sub">Every field, for post-offer analysis or when you know the details.</p>
       <div class="row">
         <div><label for="f-payout">Payout $</label><input id="f-payout" type="number" inputmode="decimal" step="0.01"></div>
@@ -203,12 +207,14 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin:26px 0 8px;}
         <button data-r="there">Finish there</button>
       </div>
       <div class="btnrow"><button id="f-go">Calculate</button></div>
-    </div>
-    <div id="f-result"></div>
+    </details>
+  </div>
 
+  <!-- ============ EXAMPLES ============ -->
+  <div class="tabpage" id="tab-examples">
     <div class="card">
       <h2 style="margin-top:0">Practice examples</h2>
-      <p class="sub">Real public cases. Tap one to load it into Quick check.</p>
+      <p class="sub">Sample cases. Tap one to load it into the checker.</p>
       <div id="examples"></div>
     </div>
   </div>
@@ -333,13 +339,14 @@ footer{color:var(--mut);font-size:12px;text-align:center;margin:26px 0 8px;}
     </div>
   </div>
 
-  <footer>BatchBrain v1.3.0 · everything stays on this device · <span id="ft-count"></span></footer>
+  <footer>BatchBrain v1.4.0 · everything stays on this device · <span id="ft-count"></span></footer>
 </div>
 
 <div id="vbar"><div class="inner"><div class="pill"><b id="vbar-v">—</b><span class="small mut" id="vbar-s"></span></div></div></div>
 
 <div class="tabs">
   <button data-t="tab-evaluate" class="on"><span class="ic">⚖️</span>Evaluate</button>
+  <button data-t="tab-examples"><span class="ic">🧪</span>Examples</button>
   <button data-t="tab-day"><span class="ic">📅</span>My day</button>
   <button data-t="tab-history"><span class="ic">🧾</span>History</button>
   <button data-t="tab-insights"><span class="ic">💡</span>Insights</button>
@@ -528,6 +535,33 @@ function showVbar(v,sub){var bar=$('vbar');bar.style.display='block';
   $('vbar-s').textContent=sub||'';}
 function hideVbar(){$('vbar').style.display='none';}
 
+/* ---------- verdict hero (v1.4: one screen — big verdict + one-line why) ---------- */
+function whyOneLine(v){
+  if(v.verdict==='TAKE') return 'Clears your targets at '+money(v.hourly)+'/hr and '+money(v.perMile)+'/mi.';
+  if(v.verdict==='BORDERLINE') return 'On the edge — '+money(v.hourly)+'/hr · '+money(v.perMile)+'/mi. Needs '+money(v.minPayout)+' to take.';
+  return 'Falls short — needs '+money(v.minPayout)+' to hit your targets; this pays '+money(v.hourly)+'/hr.';
+}
+function showHero(v){
+  var hv=$('hero-v');
+  hv.textContent=v?v.verdict:'—';
+  hv.className='verdict '+(v?(v.verdict==='TAKE'?'v-take':v.verdict==='PASS'?'v-pass':'v-border'):'v-none');
+  $('hero-why').textContent=v?whyOneLine(v):'Scan a batch or enter payout + miles to get your verdict.';
+}
+function heroError(msg){
+  var hv=$('hero-v');hv.textContent='—';hv.className='verdict v-none';
+  $('hero-why').textContent=msg;
+  $('eval-breakdown').classList.add('hidden');hideVbar();
+  window.scrollTo(0,0);
+}
+function renderVerdict(v,inp,s,q){
+  showHero(v);
+  var bd=$('eval-breakdown');bd.classList.remove('hidden');
+  $('eval-breakdown-body').innerHTML=verdictCard('Batch verdict',v,inp,s,q);
+  wireSaveButtons($('eval-breakdown-body'),inp);
+  showVbar(v.verdict,(q?money(q.minEasy)+'–'+money(q.minSlow):money(v.minPayout))+' to take');
+  window.scrollTo(0,0);
+}
+
 /* ---------- plain-English Why ---------- */
 function storeName(st){return st==='costco'?'Costco / warehouse':st==='grocery'?'grocery store':st==='delivery'?'delivery-only':'store';}
 function whyLines(v,inp,s,q){
@@ -619,8 +653,11 @@ function parseOfferText(text){
       if(ok){warns.push('Recovered a dropped decimal ($'+payout.toFixed(0)+' → $'+fixed.toFixed(2)+') — base + tip agree. Double-check.');payout=fixed;}
       else{payout=null;warns.push('Payout looks wrong ($'+amts[0].val.toFixed(0)+') and base + tip don\'t agree — left blank.');}
     }
-    // tip: look for explicit tip line
-    var tm=t.match(/tip[^\d$]{0,10}\$\s?([\d,]+(?:\.\d{2})?)/i);
+    // tip: explicit tip line — amount before "tip" ("$11.16 tip") or after ("tip $11.16").
+    // Decimals first so "$11.16" never degrades to "1"; whole dollars only when
+    // not followed by more digits or a decimal point.
+    var tm=t.match(/\$\s?([\d,]+\.\d{2})\s*tip\b/i)||t.match(/tip[^\d$]{0,12}\$\s?([\d,]+\.\d{2})/i);
+    if(!tm) tm=t.match(/\$\s?([\d,]+)(?![\d.])\s*tip\b/i)||t.match(/tip[^\d$]{0,12}\$\s?([\d,]+)(?![\d.])/i);
     if(tm) tip=Number(tm[1].replace(/,/g,''));
   }
   // miles: two independent readings; disagreement -> blank
@@ -632,7 +669,7 @@ function parseOfferText(text){
   else miles=(ma!=null?ma:mb);
   function numAfter(pat){var mm=t.match(pat);return mm?Number(mm[1]):null;}
   var items=numAfter(/(\d+)\s*items?/i), units=numAfter(/(\d+)\s*units?/i);
-  var cust=numAfter(/(\d+)\s*(?:customers?|orders?)/i);
+  var cust=numAfter(/(\d+)\s*shop and deliver/i)||numAfter(/(\d+)\s*(?:customers?|orders?)/i);
   if(items!=null&&units!=null&&units<items){warns.push('Units ('+units+') below items ('+items+') — check.');}
   var store=/costco/i.test(t)?'costco':/whole foods|trader joe|aldi|safeway|kroger|99 ranch|uwajimaya/i.test(t)?'grocery':'';
   return {payout:payout,tip:tip,miles:miles,items:items,units:units,customers:cust||1,store:store,warns:warns};
@@ -652,9 +689,15 @@ function runOCR(file){
   img.onerror=function(){ocrBusy=false;setOcrStatus('Could not open that image.');};
   img.src=URL.createObjectURL(file);
 }
+function captureInput(){
+  return {payout:Number($('c-payout').value),tip:Number($('c-tip').value)||0,
+    miles:Number($('c-miles').value),items:Number($('c-items').value)||0,
+    units:Number($('c-units').value)||0,customers:Number($('c-cust').value)||1,
+    store:$('c-store').value,returnPlan:'unknown'};
+}
 function handleCaptureText(text){
   var g=screenGate(text);
-  if(!g.ok){clearCapture();setOcrStatus('');$('q-result').innerHTML='<div class="errbox">🚫 No verdict — '+esc(g.reason)+'</div>';hideVbar();return;}
+  if(!g.ok){clearCapture();setOcrStatus('');heroError('🚫 No verdict — '+g.reason);return;}
   var p=parseOfferText(text);
   $('c-payout').value=p.payout!=null?p.payout.toFixed(2):'';
   $('c-tip').value=p.tip!=null?p.tip.toFixed(2):'';
@@ -666,8 +709,18 @@ function handleCaptureText(text){
   $('cap-warn').innerHTML=(p.warns.length?'<div class="warnbox">'+p.warns.map(esc).join('<br>')+'</div>':'')+
     '<p class="small mut">Remembered store: '+esc(S.rememberedStore||'costco')+' — change it if this shot is different.</p>';
   $('capture-review').classList.remove('hidden');
-  setOcrStatus('Review the numbers, then confirm. No verdict until you do.');
-  hideVbar();
+  // v1.4.1: verdict renders immediately after trusted OCR parse (one-tap flow).
+  // The numbers card stays visible as the correction strip — fix a number, tap ✓ to update.
+  var inp=captureInput();
+  if(inp.payout>0&&inp.miles>0){
+    S.rememberedStore=inp.store;save();
+    var s=cur(),q=bbQuick(inp.payout,inp.miles,inp,s);
+    renderVerdict(q,inp,s,q);
+    setOcrStatus('Verdict is live — fix any wrong number above, then tap ✓ to update.');
+  }else{
+    setOcrStatus('Review the numbers, then confirm. Payout and miles are needed for a verdict.');
+    hideVbar();
+  }
 }
 function clearCapture(){$('capture-review').classList.add('hidden');$('cap-warn').innerHTML='';}
 $('shot-btn').addEventListener('click',function(){$('shot').click();});
@@ -678,33 +731,27 @@ $('paste-go').addEventListener('click',function(){
   var tx=$('paste-text').value;$('paste-modal').classList.add('hidden');$('paste-text').value='';
   if(tx.trim()) handleCaptureText(tx);
 });
-$('c-cancel').addEventListener('click',function(){clearCapture();setOcrStatus('');});
+$('c-cancel').addEventListener('click',function(){
+  clearCapture();setOcrStatus('');
+  showHero(null);$('eval-breakdown').classList.add('hidden');hideVbar();
+});
 $('c-ok').addEventListener('click',function(){
-  var inp={payout:Number($('c-payout').value),tip:Number($('c-tip').value)||0,
-    miles:Number($('c-miles').value),items:Number($('c-items').value)||0,
-    units:Number($('c-units').value)||0,customers:Number($('c-cust').value)||1,
-    store:$('c-store').value,returnPlan:'unknown'};
+  var inp=captureInput();
   S.rememberedStore=inp.store;save();
-  if(!(inp.payout>0)||!(inp.miles>0)){$('q-result').innerHTML='<div class="errbox">Payout and miles are required — fix the numbers.</div>';return;}
+  if(!(inp.payout>0)||!(inp.miles>0)){heroError('Payout and miles are required — fix the numbers.');return;}
   var s=cur(),q=bbQuick(inp.payout,inp.miles,inp,s);
-  $('q-result').innerHTML=verdictCard('Screenshot offer',q,inp,s,q);
-  wireSaveButtons($('q-result'),inp);clearCapture();setOcrStatus('');
-  showVbar(q.verdict,money(q.minEasy)+'–'+money(q.minSlow)+' to take');
-  $('q-result').scrollIntoView();
+  renderVerdict(q,inp,s,q);setOcrStatus('Verdict updated.');
 });
 
 /* ---------- quick check ---------- */
 segWire('q-return',function(){});
 $('q-go').addEventListener('click',function(){
   var payout=Number($('q-payout').value), miles=Number($('q-miles').value);
-  if(!(payout>0)||!(miles>0)){$('q-result').innerHTML='<div class="errbox">Enter payout and miles.</div>';hideVbar();return;}
+  if(!(payout>0)||!(miles>0)){heroError('Enter payout and miles.');return;}
   var store=$('q-store').value, items=Number($('q-items').value)||0, cust=Number($('q-cust').value)||1;
   var inp={payout:payout,miles:miles,items:items,customers:cust,store:store,returnPlan:segVal('q-return')};
   var s=cur(),q=bbQuick(payout,miles,{store:store,items:items,customers:cust,returnPlan:segVal('q-return')},s);
-  $('q-result').innerHTML=verdictCard('Quick check',q,inp,s,q);
-  wireSaveButtons($('q-result'),inp);
-  showVbar(q.verdict,money(q.minEasy)+'–'+money(q.minSlow)+' to take');
-  $('q-result').scrollIntoView();
+  renderVerdict(q,inp,s,q);
 });
 
 /* ---------- full calculator ---------- */
@@ -719,15 +766,12 @@ $('f-go').addEventListener('click',function(){
     shopMinOverride:$('f-shopmin').value===''?null:Number($('f-shopmin').value),
     returnMiOverride:$('f-retmi').value===''?null:Number($('f-retmi').value),
     returnPlan:segVal('f-return')};
-  if(!(inp.payout>0)){$('f-result').innerHTML='<div class="errbox">Enter a payout.</div>';return;}
-  if(!(inp.miles>=0)){$('f-result').innerHTML='<div class="errbox">Enter miles (0 allowed).</div>';return;}
-  if(inp.tip>inp.payout){$('f-result').innerHTML='<div class="errbox">Tip can\'t exceed payout — fix the numbers.</div>';return;}
+  if(!(inp.payout>0)){heroError('Enter a payout.');return;}
+  if(!(inp.miles>=0)){heroError('Enter miles (0 allowed).');return;}
+  if(inp.tip>inp.payout){heroError('Tip can\'t exceed payout — fix the numbers.');return;}
   var s=cur(),v=bbVerdict(inp,s);
   v.note='Full calculation with your entered details.';
-  $('f-result').innerHTML=verdictCard('Full calculator',v,inp,s,null);
-  wireSaveButtons($('f-result'),inp);
-  showVbar(v.verdict,money(v.minPayout)+' to take');
-  $('f-result').scrollIntoView();
+  renderVerdict(v,inp,s,null);
 });
 
 /* ---------- practice examples (13) ---------- */
@@ -936,6 +980,10 @@ $('d-obtn').addEventListener('click',function(){
 
 /* ---------- init (must run before the ?scan= block: handleCaptureText reads S) ---------- */
 load();seedIfEmpty();renderExamples();renderHistory();fillSettings();renderDay();
+/* v1.4: evaluate always opens empty — no stale practice values, ever */
+['q-payout','q-miles','q-items','q-cust','f-payout','f-tip','f-miles','f-approach',
+ 'f-items','f-units','f-heavy','f-shopmin','f-retmi'].forEach(function(id){var el=$(id);if(el)el.value='';});
+showHero(null);
 
 /* ---------- back-tap scan (?scan=) ---------- */
 (function(){
